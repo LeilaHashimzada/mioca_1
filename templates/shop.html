@@ -1,0 +1,472 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+<title>Shop</title>
+{% endblock title %}
+
+{% block css %}
+<style>
+    .sidebar-widget-category .collapse {
+        max-height: none !important;
+        opacity: 1 !important;
+        overflow: visible !important;
+        display: none;
+    }
+    .sidebar-widget-category .collapse.show {
+        display: block;
+    }
+    .sidebar-widget-category li > .collapse.collapsing {
+        display: block;
+    }
+
+    .shop-sidebar-wrap .sidebar-widget.tag {
+        width: calc(100% + 300px);
+    }
+
+    .shop-sidebar-wrap .sidebar-widget.tag .sidebar-title {
+        width: calc(100% + 300px);
+    }
+
+    .shop-sidebar-wrap .sidebar-widget-tag li a {
+        white-space: nowrap;
+    }
+
+    .shop-sidebar-wrap .sidebar-widget-tag {
+        padding: 0 20px 16px;
+        position: relative;
+        z-index: 20
+    }
+
+    .shop-sidebar-wrap .sidebar-widget-tag ul {
+        display: grid;
+        grid-template-rows: repeat(2, auto);
+        grid-auto-flow: column;
+        grid-auto-columns: max-content;
+        align-content: start;
+        justify-content: start;
+        column-gap: 10px;
+        row-gap: 10px;
+        margin: 0;
+        padding: 0;
+    }
+
+    .shop-sidebar-wrap .sidebar-widget-tag li {
+        margin: 4px 0;
+    }
+
+    .shop-sidebar-wrap .sidebar-widget-tag li a {
+        float: none;
+        margin-left: 0;
+    }
+
+    @media only screen and (max-width:1199px) {
+
+        .shop-sidebar-wrap .sidebar-widget.tag,
+        .shop-sidebar-wrap .sidebar-widget.tag .sidebar-title {
+            width: 100%;
+        }
+    }
+</style>
+    <style>
+        .category-tree, .subcategory-list {
+            list-style: none;
+            padding-left: 0;
+            margin: 0;
+        }
+        .category-item {
+            margin-bottom: 10px;
+        }
+        .category-header {
+            padding: 4px 0;
+        }
+        .category-link {
+            color: #333;
+            text-decoration: none;
+            flex-grow: 1;
+        }
+        .category-link:hover {
+            color: #eaaa85; /* Adjust to match your theme hover color */
+        }
+        .subcategory-toggle {
+            cursor: pointer;
+            padding: 2px 8px;
+            font-size: 12px;
+            color: #666;
+            user-select: none;
+        }
+        .subcategory-toggle:hover {
+            color: #000;
+        }
+        .subcategory-list {
+            display: none; /* Hidden by default */
+            padding-left: 18px;
+            margin-top: 5px;
+        }
+        .subcategory-list li {
+            padding: 3px 0;
+        }
+        .subcategory-list a {
+            color: #666;
+            font-size: 14px;
+            text-decoration: none;
+        }
+        .subcategory-list a:hover {
+            color: #eaaa85;
+        }
+    </style>
+{% endblock css %}
+
+{% block main %}
+
+
+    <!-- Shop Page Start  -->
+    <div class="shop-category-area pt-100px pb-100px">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-9 order-lg-last col-md-12 order-md-first">
+                    <div class="sidebar-widget-image">
+                        <a href="#" class="single-banner">
+                            <img src="{% static 'images/banner/12.jpg' %}" alt="">
+                        </a>
+                    </div>
+                    <!-- Shop Top Area Start -->
+                    <div class="desktop-tab">
+                        <div class="shop-top-bar d-flex">
+                            <!-- Left Side End -->
+                            <div class="shop-tab nav">
+                                <a class="active" href="#shop-grid" data-bs-toggle="tab">
+                                    <i class="fa fa-th" aria-hidden="true"></i>
+                                </a>
+                            </div>
+                            <!-- Right Side Start -->
+                            <form method="get" id="sorting-form" class="shop-filter-form">
+                                <!-- Preserve all existing query parameters (including multi-select filters) except sort_by, show, and page -->
+                                {% for key, values in request.GET.lists %}
+                                    {% if key != 'sort_by' and key != 'show' and key != 'page' %}
+                                        {% for value in values %}
+                                            <input type="hidden" name="{{ key }}" value="{{ value }}">
+                                        {% endfor %}
+                                    {% endif %}
+                                {% endfor %}
+
+                                <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                                    <!-- Sort By Block -->
+                                    <div class="select-shoing-wrap d-flex align-items-center">
+                                        <div class="shot-product">
+                                            <p class="mb-0 me-2">Sort By:</p>
+                                        </div>
+                                        <div class="shop-select">
+                                            <select class="shop-sort" name="sort_by" onchange="this.form.submit()" class="shop-sort">
+                                                <option value="default" {% if request.GET.sort_by == 'default' or not request.GET.sort_by %}selected{% endif %}>Default</option>
+                                                <option value="title_asc" {% if request.GET.sort_by == 'title_asc' %}selected{% endif %}>Name, A to Z</option>
+                                                <option value="title_desc" {% if request.GET.sort_by == 'title_desc' %}selected{% endif %}>Name, Z to A</option>
+                                                <option value="price_asc" {% if request.GET.sort_by == 'price_asc' %}selected{% endif %}>Price, low to high</option>
+                                                <option value="price_desc" {% if request.GET.sort_by == 'price_desc' %}selected{% endif %}>Price, high to low</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <!-- Show / Items Per Page Block -->
+                                    <div class="select-shoing-wrap d-flex align-items-center">
+                                        <div class="shot-product">
+                                            <p class="mb-0 me-2">Show:</p>
+                                        </div>
+                                        <div class="shop-select show">
+                                            <select name="show" onchange="this.form.submit()" class="shop-sort">
+                                                <option value="3" {% if request.GET.show == '3' or not request.GET.show %}selected{% endif %}>3</option>
+                                                <option value="5" {% if request.GET.show == '5' %}selected{% endif %}>5</option>
+                                                <option value="10" {% if request.GET.show == '10' %}selected{% endif %}>10</option>
+                                                <option value="15" {% if request.GET.show == '15' %}selected{% endif %}>15</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                            <!-- Right Side End -->
+                            <!-- Left Side start -->
+                        </div>
+                    </div>
+                    <!-- Shop Top Area End -->
+
+                    <!-- Mobile shop bar -->
+                    <div class="shop-top-bar mobile-tab">
+                        <!-- Left Side End -->
+                        <div class="shop-tab nav d-flex justify-content-between">
+                            <div class="shop-tab nav">
+                                <a class="active" href="#shop-grid" data-bs-toggle="tab">
+                                    <i class="fa fa-th" aria-hidden="true"></i>
+                                </a>
+                            </div>
+                            <!-- Right Side Start -->
+                            <form method="get" id="sorting-form" class="shop-filter-form">
+                                <!-- Preserve all existing query parameters (including multi-select filters) except sort_by, show, and page -->
+                                {% for key, values in request.GET.lists %}
+                                    {% if key != 'sort_by' and key != 'show' and key != 'page' %}
+                                        {% for value in values %}
+                                            <input type="hidden" name="{{ key }}" value="{{ value }}">
+                                        {% endfor %}
+                                    {% endif %}
+                                {% endfor %}
+
+                                <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                                    <!-- Sort By Block -->
+                                    <div class="select-shoing-wrap d-flex align-items-center">
+                                        <div class="shot-product">
+                                            <p class="mb-0 me-2">Sort By:</p>
+                                        </div>
+                                        <div class="shop-select">
+                                            <select class="shop-sort" name="sort_by" onchange="this.form.submit()" class="shop-sort">
+                                                <option value="default" {% if request.GET.sort_by == 'default' or not request.GET.sort_by %}selected{% endif %}>Default</option>
+                                                <option value="title_asc" {% if request.GET.sort_by == 'title_asc' %}selected{% endif %}>Name, A to Z</option>
+                                                <option value="title_desc" {% if request.GET.sort_by == 'title_desc' %}selected{% endif %}>Name, Z to A</option>
+                                                <option value="price_asc" {% if request.GET.sort_by == 'price_asc' %}selected{% endif %}>Price, low to high</option>
+                                                <option value="price_desc" {% if request.GET.sort_by == 'price_desc' %}selected{% endif %}>Price, high to low</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <!-- Show / Items Per Page Block -->
+                                    <div class="select-shoing-wrap d-flex align-items-center">
+                                        <div class="shot-product">
+                                            <p class="mb-0 me-2">Show:</p>
+                                        </div>
+                                        <div class="shop-select show">
+                                            <select name="show" onchange="this.form.submit()" class="shop-sort">
+                                                <option value="10" {% if request.GET.show == '10' or not request.GET.show %}selected{% endif %}>10</option>
+                                                <option value="15" {% if request.GET.show == '15' %}selected{% endif %}>15</option>
+                                                <option value="20" {% if request.GET.show == '20' %}selected{% endif %}>20</option>
+                                                <option value="25" {% if request.GET.show == '25' %}selected{% endif %}>25</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    <!-- Mobile shop bar -->
+
+                    <!-- Shop Bottom Area Start -->
+                    <div class="shop-bottom-area">
+
+
+                        <!-- Tab Content Area Start -->
+                            <div class="row">
+                                <div class="col">
+                                    <div class="tab-content">
+                                        <div class="tab-pane fade show active" id="shop-grid">
+                                            <div class="row mb-n-30px">
+                                                {% for product in product_list %}
+                                                <div class="col-lg-4 col-md-6 col-sm-6 col-xs-6 mb-30px" data-aos="fade-up">
+                                                    <div class="product">
+                                                        <div class="thumb">
+                                                            <a href="{% url 'single_product' pk=product.id %}" class="image">
+                                                                {% if product.cover_image %}
+                                                                <img src="{{ product.cover_image.url }}" alt="{{ product.title }}">
+                                                                {% endif %}
+                                                            </a>
+                                                        
+                                                            <div class="actions">
+                                                                <a href="{% url 'compare' pk=product.id %}" class="action compare" title="Compare"><i class="fa-regular fa-chart-bar"></i></a>
+                                                            </div>
+                                                        </div>
+                                                        <div class="content">
+                                                            <h5><a href="{% url 'single_product' pk=product.id %}">{{ product.title }}</a></h5>
+                                                            <span class="price">${{ product.price }}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {% empty %}
+                                                <div class="col-12 text-center py-5">
+                                                    <h4>No products found matching your criteria.</h4>
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                                   
+                        <!--  Pagination Area Start -->
+                        <div class="pro-pagination-style text-center text-lg-end" data-aos="fade-up" data-aos-delay="200">
+                            <div class="pages">
+                                <ul>
+                                    {% if page_obj.has_previous %}
+                                    <li class="li"><a class="page-link" href="?page={{ page_obj.previous_page_number }}"><i class="fa fa-angle-left"></i></a>
+                                    </li>
+                                    {% endif %}
+                                    {% for page in page_obj.paginator.page_range %}
+                                    <li class="li">
+                                        {% if page == page_obj.number %}
+                                        <a class="page-link active" href="?page={{page}}">{{page}}</a>
+                                        {% else %}
+                                        <a class="page-link" href="?page={{page}}">{{page}}</a>
+                                        {% endif %}
+                                    </li>
+                                    {% endfor %}
+
+                                    {% if page_obj.has_next %}
+                                    <li class="li"><a class="page-link" href="?page={{ page_obj.next_page_number }}"><i class="fa fa-angle-right"></i></a>
+                                    </li>
+                                    {% endif %}
+                                    
+                                </ul>
+                            </div>
+                        </div>
+                        <!--  Pagination Area End -->
+                    </div>
+                    <!-- Shop Bottom Area End -->
+                </div>
+                <!-- Sidebar Area Start -->
+                <div class="col-lg-3 order-lg-first col-md-12 order-md-last">
+                    <div class="shop-sidebar-wrap">
+                        <!-- Sidebar single item -->
+                            <div class="sidebar-widget">
+                                <h4 class="sidebar-title">Categories</h4>
+                                <div class="sidebar-widget-category">
+                                    <ul class="category-tree">
+                                        {% for category in categories %}
+                                        <li class="category-item">
+                                            <div class="category-header d-flex align-items-center justify-content-between">
+                                                {% if category.child.all %}
+                                                <span class="subcategory-toggle" onclick="toggleSubcat(this, event)">
+                                                    <i class="fa fa-plus"></i>
+                                                </span>
+                                                {% endif %}
+                                                <a href="?category={{ category.id }}{% if request.GET.color %}&color={{ request.GET.color }}{% endif %}{% if request.GET.size %}&size={{ request.GET.size }}{% endif %}" 
+                                                class="category-link">
+                                                    {{ category.title }}
+                                                </a>
+                                            </div>
+
+                                            {% if category.child.all %}
+                                            <ul class="subcategory-list">
+                                                {% for subcategory in category.child.all %}
+                                                <li>
+                                                    <a href="?category={{ subcategory.id }}{% if request.GET.color %}&color={{ request.GET.color }}{% endif %}{% if request.GET.size %}&size={{ request.GET.size }}{% endif %}">
+                                                       {{ subcategory.title }}
+                                                    </a>
+                                                </li>
+                                                {% endfor %}
+                                            </ul>
+                                            {% endif %}
+                                        </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        <!-- Sidebar single item -->
+                        <div class="sidebar-widget">
+                            <h4 class="sidebar-title">Color</h4>
+                            <div class="sidebar-widget-color">
+                                <ul>
+                                    <li><a href="{% url 'shop' %}" class="selected m-0">All
+                                            <span>({{total_product_count}})</span> </a></li>
+                                    {% for color in colors %}
+                                    <li><a href="{% url 'shop' %}?color={{ color.id }}" class=""> {{color.name}} <span>({{color.quantity}})</span>
+                                        </a></li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                        <!-- Sidebar single item -->
+                        <div class="sidebar-widget">
+                            <h4 class="sidebar-title">Size</h4>
+                            <div class="sidebar-widget-size">
+                                <ul>
+                                    <li><a href="{% url 'shop' %}" class="selected m-0"></i> All
+                                            <span>({{total_product_count}})</span> </a></li>
+                                    {% for size in sizes %}
+                                    <li><a href="{% url 'shop' %}?size={{size.id}}" class=""></i> {{size.size}} <span>({{size.quantity}})</span> </a>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                        <!-- Sidebar single item -->
+                        <!-- Sidebar single item -->
+                        <div class="sidebar-widget mt-8">
+                            <h4 class="sidebar-title">Price Filter</h4>
+                            <div class="price-filter">
+                                <form method="get" action="{% url 'shop' %}" id="price-filter-form">
+                                    
+                                    {% if request.GET.category %}<input type="hidden" name="category" value="{{ request.GET.category }}">{% endif %}
+                                    {% if request.GET.tag %}<input type="hidden" name="tag" value="{{ request.GET.tag }}">{% endif %}
+                                    {% if request.GET.color %}<input type="hidden" name="color" value="{{ request.GET.color }}">{% endif %}
+                                    {% if request.GET.size %}<input type="hidden" name="size" value="{{ request.GET.size }}">{% endif %}
+
+                                    
+                                    <input type="hidden" name="min_price" id="min_price_input" value="{{ request.GET.min_price|default:'0' }}">
+                                    <input type="hidden" name="max_price" id="max_price_input" value="{{ request.GET.max_price|default:'500' }}">
+
+                                    <div class="price-slider-amount">
+                                        <input type="text" id="amount" class="p-0 h-auto lh-1" name="price" placeholder="Add Your Price" readonly />
+                                    </div>
+                                    <div id="slider-range"></div>
+
+                                    <button type="submit" class="btn btn-primary btn-hover-dark mt-3 w-100">Filter</button>
+                                </form>
+                            </div>
+                        </div>
+                        <!-- Sidebar single item -->
+                        <div class="sidebar-widget tag m-0">
+                            <h4 class="sidebar-title">Tags</h4>
+                            <div class="sidebar-widget-tag">
+                                <ul>
+                                    {% for tag in tags %}
+                                    <li><a href="?tag={{tag.id}}">{{tag.name}}</a></li>
+                                    {% endfor %}
+
+                                </ul>
+                            </div>
+                        </div>
+                        <!-- Sidebar single item -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Shop Page End  -->
+{% endblock main %}
+
+{% block js %}
+    <script>
+        function toggleSubcat(element, event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const parentLi = element.closest('.category-item');
+            const subList = parentLi.querySelector('.subcategory-list');
+            const icon = element.querySelector('i');
+
+            if (subList) {
+                if (subList.style.display === "block") {
+                    subList.style.display = "none";
+                    icon.className = "fa fa-plus";
+                } else {
+                    subList.style.display = "block";
+                    icon.className = "fa fa-minus";
+                }
+            }
+        }
+
+        $(document).ready(function () {
+            var minVal = parseInt($("#min_price_input").val()) || 0;
+            var maxVal = parseInt($("#max_price_input").val()) || 500;
+
+            $("#slider-range").slider({
+                range: true,
+                min: 0,
+                max: 500,
+                values: [minVal, maxVal],
+                slide: function (event, ui) {
+                    $("#amount").val("$" + ui.values[0] + " - $" + ui.values[1]);
+                    $("#min_price_input").val(ui.values[0]);
+                    $("#max_price_input").val(ui.values[1]);
+                }
+            });
+
+            $("#amount").val("$" + $("#slider-range").slider("values", 0) + " - $" + $("#slider-range").slider("values", 1));
+        });
+    </script>
+{% endblock %}
